@@ -1,0 +1,83 @@
+# 钓迹 App — application.yml
+# Spring Boot 3.2.5 + Java 17
+
+server:
+  port: 8081
+
+spring:
+  application:
+    name: diaoji-server
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/diaoji_system?useUnicode=true&characterEncoding=UTF-8&characterSetResults=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&connectionCollation=utf8mb4_general_ci
+    username: root
+    password: root123456
+    hikari:
+      connection-init-sql: SET NAMES utf8mb4
+      maximum-pool-size: 1
+
+  data:
+    redis:
+      host: localhost
+      port: 6380
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.diaoji.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# Sa-Token 鉴权配置
+sa-token:
+  token-name: Authorization
+  token-prefix: Bearer
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: false
+
+# MinIO 配置
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+  bucket-name: diaoji
+  public-host: http://localhost:9000
+
+# 微信OAuth配置（需替换为实际AppID和AppSecret）
+wechat:
+  appid: YOUR_WECHAT_APPID
+  secret: YOUR_WECHAT_SECRET
+
+# 和风天气API配置（需替换为实际Key）
+qweather:
+  api-key: YOUR_QWEATHER_API_KEY
+
+# 腾讯地图 WebService API Key（后端用于逆地理编码）
+qqmap:
+  api-key: VI6BZ-YKSWI-XEFGF-UTAGT-XEFT3-K4BPW
+
+# JWT密钥（需替换为实际密钥）
+jwt:
+  secret: DiaoJiSecretKey2026MustBeAtLeast256Bits!
+  expiration: 604800000  # 7天 = 7*24*60*60*1000
+
+# 日志配置
+logging:
+  level:
+    com.diaoji: debug
+    com.diaoji.mapper: debug
