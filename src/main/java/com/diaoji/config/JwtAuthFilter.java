@@ -40,6 +40,10 @@ public class JwtAuthFilter implements Filter {
         "/api/feed",
         "/api/fish-index",
         "/api/user/captcha",
+        "/api/home/",
+        // 他人公开资料（只读）
+        "/api/user/",
+        "/api/catch/user/",
     };
 
     /** 钓点详情：GET /api/spot/{数字} 无需 token */

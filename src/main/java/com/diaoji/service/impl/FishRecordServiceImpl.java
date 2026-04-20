@@ -186,4 +186,57 @@ public class FishRecordServiceImpl extends ServiceImpl<FishRecordMapper, FishRec
         stats.put("thisMonthTrips", thisMonthTrips);
         return stats;
     }
+
+    @Override
+    @Transactional
+    public void updateRecord(Long userId, Long recordId, Map<String, Object> params) {
+        FishRecord record = baseMapper.selectById(recordId);
+        if (record == null) throw new RuntimeException("渔获记录不存在");
+        if (!userId.equals(record.getUserId())) throw new RuntimeException("无权修改此记录");
+
+        if (params.containsKey("fishSpecies")) record.setFishSpecies((String) params.get("fishSpecies"));
+
+        if (params.containsKey("weight")) {
+            try { record.setWeight(new BigDecimal(params.get("weight").toString())); } catch (Exception ignored) {}
+        }
+        if (params.containsKey("length")) {
+            try { record.setLength(new BigDecimal(params.get("length").toString())); } catch (Exception ignored) {}
+        }
+        if (params.containsKey("quantity")) {
+            record.setQuantity(((Number) params.get("quantity")).intValue());
+        }
+        if (params.containsKey("spotId")) {
+            record.setSpotId(((Number) params.get("spotId")).longValue());
+        }
+        if (params.containsKey("spotName")) record.setSpotName((String) params.get("spotName"));
+        if (params.containsKey("gpsLatitude")) {
+            try { record.setGpsLatitude(new BigDecimal(params.get("gpsLatitude").toString())); } catch (Exception ignored) {}
+        }
+        if (params.containsKey("gpsLongitude")) {
+            try { record.setGpsLongitude(new BigDecimal(params.get("gpsLongitude").toString())); } catch (Exception ignored) {}
+        }
+        if (params.containsKey("weather")) record.setWeatherJson(params.get("weather").toString());
+        if (params.containsKey("fishFeeling")) record.setFishFeeling((String) params.get("fishFeeling"));
+        if (params.containsKey("note")) record.setNote((String) params.get("note"));
+
+        // 图片更新（仅支持单图，编辑时暂不支持重新上传）
+        if (params.containsKey("photoUrl")) {
+            String url = params.get("photoUrl").toString();
+            if (!url.isEmpty() && !url.startsWith("http")) {
+                url = minioUploader.uploadBase64(url, "catch/");
+            }
+            record.setPhotoUrl(url);
+        }
+
+        baseMapper.updateById(record);
+    }
+
+    @Override
+    @Transactional
+    public void deleteRecord(Long userId, Long recordId) {
+        FishRecord record = baseMapper.selectById(recordId);
+        if (record == null) throw new RuntimeException("渔获记录不存在");
+        if (!userId.equals(record.getUserId())) throw new RuntimeException("无权删除此记录");
+        baseMapper.deleteById(recordId);
+    }
 }

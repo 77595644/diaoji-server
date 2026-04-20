@@ -26,4 +26,10 @@ public interface FishRecordService extends IService<FishRecord> {
 
     /** 渔获统计 */
     Map<String, Object> getStats(Long userId);
+
+    /** 更新渔获 */
+    void updateRecord(Long userId, Long recordId, Map<String, Object> params);
+
+    /** 删除渔获 */
+    void deleteRecord(Long userId, Long recordId);
 }

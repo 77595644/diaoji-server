@@ -89,4 +89,22 @@ public class UserController {
         Long userId = UserContext.getUserId();
         return Result.success(userService.getUserStats(userId));
     }
+
+    @Operation(summary = "查看他人资料（公开，只读）")
+    @GetMapping("/{userId}")
+    public Result<User> getUserById(@PathVariable Long userId) {
+        User user = userService.getById(userId);
+        if (user == null || user.getDeleted() == 1) {
+            return Result.error("用户不存在");
+        }
+        // 脱敏：隐藏密码字段
+        user.setPassword(null);
+        return Result.success(user);
+    }
+
+    @Operation(summary = "查看他人数据看板（公开，只读）")
+    @GetMapping("/{userId}/stats")
+    public Result<Object> getUserStats(@PathVariable Long userId) {
+        return Result.success(userService.getUserStats(userId));
+    }
 }

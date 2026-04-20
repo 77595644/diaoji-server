@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.diaoji.mapper.HomeMapper">
+
+    <select id="listNearbyByDistance" resultType="com.diaoji.vo.NearbySpotVO">
+        SELECT
+            s.id            AS spotId,
+            s.name          AS spotName,
+            s.city          AS city,
+            ROUND(6371 * acos(
+                LEAST(1.0, GREATEST(-1.0,
+                    cos(radians(#{lat})) * cos(radians(s.latitude))
+                    * cos(radians(s.longitude) - radians(#{lng}))
+                    + sin(radians(#{lat})) * sin(radians(s.latitude))
+                ))
+            ), 1) AS distanceKm,
+            (SELECT COUNT(*) FROM t_fish_record r
+             WHERE r.spot_id = s.id
+               AND r.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+               AND r.deleted = 0) AS heatScore,
+            s.avg_rating AS avgRating
+        FROM t_fishing_spot s
+        WHERE s.deleted = 0
+          AND 6371 * acos(
+                LEAST(1.0, GREATEST(-1.0,
+                    cos(radians(#{lat})) * cos(radians(s.latitude))
+                    * cos(radians(s.longitude) - radians(#{lng}))
+                    + sin(radians(#{lat})) * sin(radians(s.latitude))
+                ))
+              ) &lt;= #{radiusKm}
+        ORDER BY distanceKm ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="listNearbyByHeat" resultType="com.diaoji.vo.NearbySpotVO">
+        SELECT
+            s.id            AS spotId,
+            s.name          AS spotName,
+            s.city          AS city,
+            ROUND(6371 * acos(
+                LEAST(1.0, GREATEST(-1.0,
+                    cos(radians(#{lat})) * cos(radians(s.latitude))
+                    * cos(radians(s.longitude) - radians(#{lng}))
+                    + sin(radians(#{lat})) * sin(radians(s.latitude))
+                ))
+            ), 1) AS distanceKm,
+            (SELECT COUNT(*) FROM t_fish_record r
+             WHERE r.spot_id = s.id
+               AND r.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+               AND r.deleted = 0) AS heatScore,
+            s.avg_rating AS avgRating
+        FROM t_fishing_spot s
+        WHERE s.deleted = 0
+          AND 6371 * acos(
+                LEAST(1.0, GREATEST(-1.0,
+                    cos(radians(#{lat})) * cos(radians(s.latitude))
+                    * cos(radians(s.longitude) - radians(#{lng}))
+                    + sin(radians(#{lat})) * sin(radians(s.latitude))
+                ))
+              ) &lt;= #{radiusKm}
+        ORDER BY heatScore DESC, distanceKm ASC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+</mapper>

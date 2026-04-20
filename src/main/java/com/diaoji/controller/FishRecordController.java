@@ -62,4 +62,29 @@ public class FishRecordController {
         Long userId = UserContext.getUserId();
         return Result.success(fishRecordService.getStats(userId));
     }
+
+    @Operation(summary = "查看指定用户的渔获列表（公开，只读）")
+    @GetMapping("/user/{userId}")
+    public Result<Page<FishRecord>> getUserRecords(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(fishRecordService.getMyRecords(userId, page, size));
+    }
+
+    @Operation(summary = "更新渔获（仅本人）")
+    @PutMapping("/{id}")
+    public Result<Void> updateRecord(@PathVariable Long id, @RequestBody Map<String, Object> params) {
+        Long userId = UserContext.getUserId();
+        fishRecordService.updateRecord(userId, id, params);
+        return Result.success();
+    }
+
+    @Operation(summary = "删除渔获（仅本人）")
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteRecord(@PathVariable Long id) {
+        Long userId = UserContext.getUserId();
+        fishRecordService.deleteRecord(userId, id);
+        return Result.success();
+    }
 }
