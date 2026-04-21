@@ -14,8 +14,7 @@ spring:
     username: root
     password: root123456
     hikari:
-      connection-init-sql: SET NAMES utf8mb4
-      maximum-pool-size: 1
+      maximum-pool-size: 10
 
   data:
     redis:
