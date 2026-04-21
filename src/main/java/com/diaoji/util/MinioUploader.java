@@ -2,13 +2,17 @@ package com.diaoji.util;
 
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.StatObjectArgs;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -19,6 +23,9 @@ public class MinioUploader {
 
     @Autowired
     private MinioClient minioClient;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
@@ -121,5 +128,66 @@ public class MinioUploader {
             case ".webp" -> "image/webp";
             default -> "image/jpeg";
         };
+    }
+
+    /**
+     * 从公网 URL 中提取 objectName 并删除 MinIO 文件
+     * @param publicUrl  公网访问 URL，格式如 http://localhost:9000/diaoji/catch/xxx.jpg
+     */
+    public void deleteFile(String publicUrl) {
+        if (publicUrl == null || publicUrl.isEmpty()) return;
+        try {
+            // 提取实际存储路径（去 publicHost 和 bucketName 前缀）
+            String objectName;
+            if (publicHost != null && publicHost.endsWith("/")) {
+                // publicHost 如 http://localhost:9000，URL 是 http://localhost:9000/diaoji/catch/xxx.png
+                // 去掉 host 后剩 diaoji/catch/xxx.png，再去掉 diaoji/ 前缀才是真正 objectName
+                objectName = publicUrl.replace(publicHost, "");
+                if (objectName.startsWith(bucketName + "/")) {
+                    objectName = objectName.substring(bucketName.length() + 1);
+                }
+            } else if (publicHost != null) {
+                objectName = publicUrl.replace(publicHost + "/", "");
+                if (objectName.startsWith(bucketName + "/")) {
+                    objectName = objectName.substring(bucketName.length() + 1);
+                }
+            } else {
+                int idx = publicUrl.indexOf("/" + bucketName + "/");
+                if (idx < 0) return;
+                objectName = publicUrl.substring(idx + ("/" + bucketName + "/").length());
+            }
+
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(objectName)
+                    .build());
+        } catch (Exception e) {
+            System.err.println("[MinioUploader] 删除文件失败: " + publicUrl + " | " + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据公网 URL 列表批量删除文件
+     */
+    public void deleteFiles(List<String> urls) {
+        if (urls == null || urls.isEmpty()) return;
+        for (String url : urls) {
+            deleteFile(url);
+        }
+    }
+
+    /**
+     * 从数据库 photos JSON 字符串解析出 URL 列表
+     * @param photosJson  如 ["url1","url2"] 或 null
+     */
+    public List<String> parsePhotoUrls(String photosJson) {
+        if (photosJson == null || photosJson.isEmpty()) return Collections.emptyList();
+        try {
+            @SuppressWarnings("unchecked")
+            List<String> list = objectMapper.readValue(photosJson, List.class);
+            return list;
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }
